@@ -2,9 +2,10 @@
   color-scheme: dark;
   font-family: "Trebuchet MS", "Verdana", sans-serif;
   background:
-    radial-gradient(circle at top, rgba(124, 151, 103, 0.16), transparent 28%),
-    linear-gradient(180deg, #2b271d 0%, #161910 65%, #0d0f0a 100%);
-  color: #f2ead8;
+    radial-gradient(circle at top, rgba(205, 226, 177, 0.28), transparent 30%),
+    radial-gradient(circle at bottom, rgba(103, 146, 102, 0.18), transparent 34%),
+    linear-gradient(180deg, #efe8d8 0%, #dbe6ca 22%, #86a971 62%, #31462d 100%);
+  color: #1f261c;
 }
 
 * {
@@ -24,6 +25,8 @@ body,
 
 body {
   touch-action: manipulation;
+  background:
+    radial-gradient(circle at top, rgba(239, 232, 216, 0.95), rgba(219, 230, 202, 0.85) 38%, rgba(49, 70, 45, 0.92) 100%);
 }
 
 canvas {

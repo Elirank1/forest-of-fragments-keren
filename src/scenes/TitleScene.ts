@@ -11,36 +11,36 @@ export class TitleScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     buildBackdrop(this, {
-      top: 0x25311d,
-      bottom: 0x100f0d,
-      haze: 0x6a8d54,
-      ember: 0xd4c4a1
+      top: 0xece5d6,
+      bottom: 0x6f9461,
+      haze: 0xc9ddb2,
+      ember: 0xf3d38a
     });
     fadeInScene(this);
     playUiTone('title');
 
-    const glow = this.add.ellipse(width / 2, height * 0.18, width * 0.62, 120, 0xa7c770, 0.12).setBlendMode(Phaser.BlendModes.ADD);
+    const glow = this.add.ellipse(width / 2, height * 0.18, width * 0.62, 120, 0xa7c770, 0.17).setBlendMode(Phaser.BlendModes.ADD);
     const frame = createPanel(this, width / 2, height * 0.53, width * 0.88, height * 0.74, 0.58);
     const title = this.add.text(width / 2, height * 0.15, 'FOREST OF FRAGMENTS', {
       fontFamily: 'Georgia',
       fontSize: width < 500 ? '36px' : '52px',
       fontStyle: 'bold',
-      color: '#f2ead8',
+      color: '#233320',
       align: 'center'
     }).setOrigin(0.5);
-    title.setShadow(0, 8, '#000000', 14, false, true);
+    title.setShadow(0, 6, '#f6f2e6', 10, false, true);
     title.setScale(0.9);
 
     const subtitle = this.add.text(width / 2, height * 0.225, 'A game by Mishpachat Keren', {
       fontFamily: 'Trebuchet MS',
       fontSize: width < 500 ? '18px' : '22px',
-      color: '#dcc89f'
+      color: '#4f6845'
     }).setOrigin(0.5);
 
     const story = this.add.text(width / 2, height * 0.34, 'The forest is breaking.\nSome want to save it.\nSome want to end it.', {
       fontFamily: 'Georgia',
       fontSize: width < 500 ? '20px' : '24px',
-      color: '#d7d1bf',
+      color: '#33412d',
       align: 'center',
       lineSpacing: 10
     }).setOrigin(0.5);
@@ -61,7 +61,7 @@ export class TitleScene extends Phaser.Scene {
     const credit = this.add.text(width / 2, height * 0.92, 'Inspired by drawings of the Keren children', {
       fontFamily: 'Trebuchet MS',
       fontSize: '16px',
-      color: '#cab38b'
+      color: '#4a6242'
     }).setOrigin(0.5);
     credit.setAlpha(0.86);
 

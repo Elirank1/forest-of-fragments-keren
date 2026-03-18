@@ -52,6 +52,7 @@ export class GameScene extends Phaser.Scene {
   private attackWindup = false;
   private lastTrailAt = 0;
   private lionSeen = false;
+  private nextHealAt = 7;
 
   constructor() {
     super('game');
@@ -77,6 +78,7 @@ export class GameScene extends Phaser.Scene {
     this.audioSystem.playAmbient('forest-bed');
     this.audioSystem.playMusic('gameplay');
 
+    this.createArenaTextures();
     this.buildBackdrop();
     this.buildWorld();
 
@@ -101,7 +103,7 @@ export class GameScene extends Phaser.Scene {
     this.buildTouchControls();
 
     this.runStartAt = this.time.now;
-    this.showMessage('Gather the forest fragments.\nClear each wave and hold the grove.', 2200);
+    this.showMessage('Collect the glowing stars.\nClear waves and heal the forest.', 2200);
     this.cameras.main.fadeIn(300, 10, 10, 10);
     this.cameras.main.zoomTo(1.04, 220);
     this.time.delayedCall(250, () => this.cameras.main.zoomTo(1, 340));
@@ -110,32 +112,32 @@ export class GameScene extends Phaser.Scene {
 
   private buildBackdrop(): void {
     const { width, height } = this.scale;
-    this.add.image(width / 2, height / 2, 'paper').setDisplaySize(width, height).setAlpha(0.82);
+    this.add.image(width / 2, height / 2, 'paper').setDisplaySize(width, height).setAlpha(0.94);
 
     const sky = this.add.graphics();
-    sky.fillGradientStyle(0x213220, 0x213220, 0x15100d, 0x4a2818, 1);
+    sky.fillGradientStyle(0xeceddc, 0xeceddc, 0x8bb178, 0x476347, 1);
     sky.fillRect(0, 0, width, height);
-    sky.setAlpha(0.94);
+    sky.setAlpha(0.98);
 
     this.deepLayer = this.add.container(0, 0);
     this.midLayer = this.add.container(0, 0);
     this.frontLayer = this.add.container(0, 0);
 
     for (let i = 0; i < 8; i += 1) {
-      this.deepLayer.add(this.add.ellipse(25 + i * 60, 140 + i * 28, 140, 300, 0x0d100c, 0.3).setAngle(i % 2 === 0 ? -14 : 10));
+      this.deepLayer.add(this.add.ellipse(25 + i * 60, 140 + i * 28, 140, 300, 0x395039, 0.18).setAngle(i % 2 === 0 ? -14 : 10));
     }
     for (let i = 0; i < 10; i += 1) {
-      this.midLayer.add(this.add.ellipse(-6 + i * 48, 220 + (i % 4) * 42, 86, 220, 0x2a3b29, 0.22).setAngle(i % 2 === 0 ? 12 : -10));
+      this.midLayer.add(this.add.ellipse(-6 + i * 48, 220 + (i % 4) * 42, 86, 220, 0x6f8e5d, 0.16).setAngle(i % 2 === 0 ? 12 : -10));
     }
     for (let i = 0; i < 22; i += 1) {
       this.frontLayer.add(
         this.add
-          .ellipse(Phaser.Math.Between(0, width), height - Phaser.Math.Between(56, 150), Phaser.Math.Between(34, 92), Phaser.Math.Between(8, 22), 0x2a431f, 0.27)
+          .ellipse(Phaser.Math.Between(0, width), height - Phaser.Math.Between(56, 150), Phaser.Math.Between(34, 92), Phaser.Math.Between(8, 22), 0xa5c084, 0.2)
           .setAngle(Phaser.Math.Between(-12, 12))
       );
     }
 
-    const fog = this.add.rectangle(width / 2, height * 0.62, width, height * 0.34, 0xc9ddb6, 0.06);
+    const fog = this.add.rectangle(width / 2, height * 0.62, width, height * 0.34, 0xf3f5e6, 0.1);
     this.tweens.add({
       targets: fog,
       alpha: { from: 0.03, to: 0.08 },
@@ -155,10 +157,36 @@ export class GameScene extends Phaser.Scene {
       speedY: { min: -5, max: 5 },
       quantity: 1,
       frequency: 260,
-      tint: 0xe1d2af
+      tint: 0xfff7d3
     });
 
     this.darkOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x060606, 0).setScrollFactor(0).setDepth(90);
+  }
+
+  private createArenaTextures(): void {
+    if (this.textures.exists('fragment-star')) {
+      return;
+    }
+
+    const g = this.add.graphics();
+    g.fillStyle(0xfff4a6, 1);
+    g.lineStyle(2, 0xe9b857, 0.95);
+    g.beginPath();
+    g.moveTo(16, 2);
+    g.lineTo(20, 12);
+    g.lineTo(31, 12);
+    g.lineTo(22, 19);
+    g.lineTo(26, 30);
+    g.lineTo(16, 23);
+    g.lineTo(6, 30);
+    g.lineTo(10, 19);
+    g.lineTo(1, 12);
+    g.lineTo(12, 12);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+    g.generateTexture('fragment-star', 32, 32);
+    g.destroy();
   }
 
   private buildWorld(): void {
@@ -167,22 +195,22 @@ export class GameScene extends Phaser.Scene {
     this.platforms = this.physics.add.staticGroup();
     this.createGround(215, 610, 430, 64);
     this.createGround(90, 450, 120, 18);
-    this.createGround(310, 390, 150, 18);
-    this.createGround(180, 310, 120, 18);
+    this.createGround(314, 404, 132, 18);
+    this.createGround(170, 328, 96, 18);
   }
 
   private createGround(x: number, y: number, width: number, height: number): void {
-    const glow = this.add.ellipse(x, y + 4, width * 0.72, height * 0.8, 0x8cb362, 0.08).setBlendMode(Phaser.BlendModes.ADD);
-    const ground = this.add.rectangle(x, y, width, height, 0x32251a, 0.95).setStrokeStyle(2, 0x93815d, 0.82);
-    const moss = this.add.rectangle(x, y - height / 2 + 4, width - 12, 8, 0x526740, 0.6);
+    const glow = this.add.ellipse(x, y + 4, width * 0.72, height * 0.8, 0xbfe08e, 0.1).setBlendMode(Phaser.BlendModes.ADD);
+    const ground = this.add.rectangle(x, y, width, height, 0x6c583a, 0.92).setStrokeStyle(2, 0xd9c792, 0.78);
+    const moss = this.add.rectangle(x, y - height / 2 + 4, width - 12, 8, 0x8ab468, 0.72);
     this.frontLayer.add([glow, ground, moss]);
     this.physics.add.existing(ground, true);
     this.platforms.add(ground);
   }
 
   private decoratePlayer(): void {
-    this.playerShadow = this.add.ellipse(this.player.x, this.player.y + 34, 42, 14, 0x000000, 0.22);
-    this.playerGlow = this.add.ellipse(this.player.x, this.player.y, 62, 78, this.player.guardian.color, 0.14).setBlendMode(Phaser.BlendModes.ADD);
+    this.playerShadow = this.add.ellipse(this.player.x, this.player.y + 34, 42, 14, 0x32442f, 0.18);
+    this.playerGlow = this.add.ellipse(this.player.x, this.player.y, 62, 78, this.player.guardian.color, 0.2).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({
       targets: this.player,
       scaleY: 1.04,
@@ -205,8 +233,8 @@ export class GameScene extends Phaser.Scene {
   private buildHud(): void {
     const panel = this.add.container(16, 12).setScrollFactor(0).setDepth(100);
     const glass = this.add.graphics();
-    glass.fillStyle(0x120f0d, 0.76);
-    glass.lineStyle(2, 0xd4bb8e, 0.55);
+    glass.fillStyle(0xf7f0de, 0.88);
+    glass.lineStyle(2, 0x6d8e60, 0.72);
     glass.fillRoundedRect(0, 0, 278, 92, 20);
     glass.strokeRoundedRect(0, 0, 278, 92, 20);
     panel.add(glass);
@@ -214,49 +242,49 @@ export class GameScene extends Phaser.Scene {
     this.roundText = this.add.text(16, 10, '', {
       fontFamily: 'Georgia',
       fontSize: '18px',
-      color: '#f5edd8'
+      color: '#22311f'
     });
     this.healthText = this.add.text(16, 32, '', {
       fontFamily: 'Trebuchet MS',
       fontSize: '16px',
-      color: '#f5edd8'
+      color: '#2a3a26'
     });
     this.scoreText = this.add.text(16, 52, '', {
       fontFamily: 'Trebuchet MS',
       fontSize: '16px',
-      color: '#f5edd8'
+      color: '#2a3a26'
     });
     this.cooldownText = this.add.text(16, 72, '', {
       fontFamily: 'Trebuchet MS',
       fontSize: '15px',
-      color: '#d5c69f'
+      color: '#59704f'
     });
     panel.add([this.roundText, this.healthText, this.scoreText, this.cooldownText]);
 
-    this.fragmentBarGlow = this.add.ellipse(350, 28, 90, 18, 0xa4d274, 0.16).setBlendMode(Phaser.BlendModes.ADD).setScrollFactor(0).setDepth(99);
+    this.fragmentBarGlow = this.add.ellipse(350, 28, 90, 18, 0xffdf77, 0.18).setBlendMode(Phaser.BlendModes.ADD).setScrollFactor(0).setDepth(99);
     this.fragmentBar = this.add.graphics().setScrollFactor(0).setDepth(100);
 
     this.comboText = this.add.text(412, 46, '', {
       fontFamily: 'Georgia',
       fontSize: '24px',
-      color: '#f7efd9'
+      color: '#2d3c28'
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(100).setAlpha(0);
 
     this.messageText = this.add.text(215, 108, '', {
       fontFamily: 'Georgia',
       fontSize: '20px',
-      color: '#f5edd8',
+      color: '#24331f',
       align: 'center',
       wordWrap: { width: 330 }
     }).setOrigin(0.5).setScrollFactor(0).setDepth(100);
-    this.messageText.setShadow(0, 4, '#000000', 10, false, true);
+    this.messageText.setShadow(0, 2, '#fffef3', 6, false, true);
   }
 
   private buildTouchControls(): void {
     const { height } = this.scale;
-    const joystickKnob = this.add.circle(76, height - 82, 24, 0xeadab6, 0.22).setStrokeStyle(2, 0xf6efd9, 0.7).setScrollFactor(0).setDepth(101);
-    this.add.circle(76, height - 82, 44, 0x0b0d0a, 0.32).setStrokeStyle(2, 0xd5c393, 0.5).setScrollFactor(0).setDepth(100);
-    this.add.circle(76, height - 82, 60, 0x000000, 0).setStrokeStyle(1, 0xd5c393, 0.18).setScrollFactor(0).setDepth(100);
+    const joystickKnob = this.add.circle(76, height - 82, 24, 0xfff5d6, 0.35).setStrokeStyle(2, 0x6e915f, 0.76).setScrollFactor(0).setDepth(101);
+    this.add.circle(76, height - 82, 44, 0xf7edda, 0.42).setStrokeStyle(2, 0x88a46f, 0.7).setScrollFactor(0).setDepth(100);
+    this.add.circle(76, height - 82, 60, 0x000000, 0).setStrokeStyle(1, 0x88a46f, 0.24).setScrollFactor(0).setDepth(100);
     const joystickZone = this.add.zone(76, height - 82, 136, 136).setScrollFactor(0).setDepth(102);
     this.controls.bindJoystick(joystickZone, joystickKnob, 76, height - 82, 30);
 
@@ -267,11 +295,11 @@ export class GameScene extends Phaser.Scene {
       fill: number
     ): void => {
       const glow = this.add.circle(x, height - 82, 36, fill, 0.15).setBlendMode(Phaser.BlendModes.ADD).setScrollFactor(0).setDepth(100);
-      const outer = this.add.circle(x, height - 82, 30, 0x120f0d, 0.48).setStrokeStyle(2, fill, 0.7).setScrollFactor(0).setDepth(101);
+      const outer = this.add.circle(x, height - 82, 30, 0xf7efdd, 0.55).setStrokeStyle(2, fill, 0.84).setScrollFactor(0).setDepth(101);
       this.add.text(x, height - 82, label, {
         fontFamily: 'Georgia',
         fontSize: '14px',
-        color: '#f7efd9'
+        color: '#294029'
       }).setOrigin(0.5).setScrollFactor(0).setDepth(102);
       const zone = this.add.zone(x, height - 82, 84, 84).setScrollFactor(0).setDepth(103);
       this.controls.bindActionButton(zone, key, false, {
@@ -313,7 +341,7 @@ export class GameScene extends Phaser.Scene {
     const wave = this.level.waves[this.roundIndex];
     this.roundActive = true;
     this.roundSpawnsPending = 0;
-    this.showMessage(wave.message, 1800);
+    this.showMessage(`Round ${this.roundIndex + 1}\n${wave.message}`, 1600);
     this.spawnRound(wave);
   }
 
@@ -420,7 +448,7 @@ export class GameScene extends Phaser.Scene {
       duration: 1050,
       ease: 'Sine.easeOut'
     });
-    this.showMessage('The Lion watches.\nNothing whole stays whole.', 2300);
+    this.showMessage('The Lion appears.\nThe forest holds its breath.', 2300);
 
     this.time.delayedCall(700, () => {
       this.time.timeScale = 1;
@@ -729,11 +757,10 @@ export class GameScene extends Phaser.Scene {
 
   private dropFragments(x: number, y: number, count: number): void {
     for (let i = 0; i < count; i += 1) {
-      const fragment = this.physics.add.image(x, y, 'paper');
-      fragment.setDisplaySize(14, 14);
-      fragment.setTint(0xf3efb9);
+      const fragment = this.physics.add.image(x, y, 'fragment-star');
+      fragment.setDisplaySize(18, 18);
       fragment.setBlendMode(Phaser.BlendModes.ADD);
-      fragment.setCircle(7);
+      fragment.setCircle(9);
       fragment.setBounce(0.8);
       fragment.setVelocity(Phaser.Math.Between(-120, 120), Phaser.Math.Between(-230, -120));
       fragment.setDrag(35, 0);
@@ -750,8 +777,13 @@ export class GameScene extends Phaser.Scene {
     fragment.destroy();
     this.fragmentsCollected += 1;
     this.score += 40;
-    this.spawnScorePopup(this.player.x, this.player.y - 48, '+1 Fragment', '#dff2a0');
+    this.spawnScorePopup(this.player.x, this.player.y - 48, '+1 Star', '#dff2a0');
     this.audioSystem.playSfx('score-tally', { volume: 0.035, rate: 1.2 });
+    if (this.fragmentsCollected >= this.nextHealAt && this.player.health < this.player.maxHealth) {
+      this.player.health = Math.min(this.player.maxHealth, this.player.health + 1);
+      this.nextHealAt += 7;
+      this.spawnScorePopup(this.player.x, this.player.y - 72, '+1 Heart', '#ffb7b0');
+    }
     if (this.fragmentsCollected >= this.fragmentsGoal && this.roundIndex >= this.level.waves.length - 1 && this.countHostiles() === 0) {
       this.completeRun(true);
     }
@@ -768,6 +800,19 @@ export class GameScene extends Phaser.Scene {
     this.deepLayer.x = Phaser.Math.Linear(this.deepLayer.x, (215 - this.player.x) * 0.03, 0.03);
     this.midLayer.x = Phaser.Math.Linear(this.midLayer.x, (215 - this.player.x) * 0.05, 0.04);
     this.frontLayer.x = Phaser.Math.Linear(this.frontLayer.x, (215 - this.player.x) * 0.08, 0.05);
+
+    this.fragments.children.each((entry) => {
+      const fragment = entry as Phaser.Physics.Arcade.Image;
+      if (!fragment.active) {
+        return false;
+      }
+      const distance = Phaser.Math.Distance.Between(fragment.x, fragment.y, this.player.x, this.player.y);
+      if (distance < 120) {
+        this.physics.moveToObject(fragment, this.player, 120 + (120 - distance) * 2.3);
+      }
+      fragment.angle += 2.2;
+      return false;
+    });
 
     if (this.player.guardian.id === 'aero-finch' && time < this.specialActiveUntil && time - this.lastTrailAt > 45) {
       this.lastTrailAt = time;
@@ -831,17 +876,17 @@ export class GameScene extends Phaser.Scene {
 
   private updateHud(time: number): void {
     this.roundText.setText(`Round ${Math.min(this.roundIndex + 1, this.level.waves.length)} / ${this.level.waves.length}`);
-    this.healthText.setText(`Health ${this.player.health}/${this.player.maxHealth}   Fragments ${this.fragmentsCollected}/${this.fragmentsGoal}`);
+    this.healthText.setText(`Hearts ${this.player.health}/${this.player.maxHealth}   Stars ${this.fragmentsCollected}/${this.fragmentsGoal}`);
     this.scoreText.setText(`Score ${this.score}   Defeated ${this.defeated}`);
     const specialReadyIn = Math.max(0, this.player.guardian.specialCooldown - (time - this.player.lastSpecialAt));
     this.cooldownText.setText(specialReadyIn <= 0 ? 'Special ready' : `Special in ${(specialReadyIn / 1000).toFixed(1)}s`);
 
     this.fragmentBar.clear();
-    this.fragmentBar.fillStyle(0x18130f, 0.78);
+    this.fragmentBar.fillStyle(0xf1ead8, 0.92);
     this.fragmentBar.fillRoundedRect(305, 20, 106, 14, 7);
-    this.fragmentBar.lineStyle(2, 0xd7c08f, 0.7);
+    this.fragmentBar.lineStyle(2, 0x6c8e60, 0.78);
     this.fragmentBar.strokeRoundedRect(305, 20, 106, 14, 7);
-    this.fragmentBar.fillStyle(0xa4d274, 0.95);
+    this.fragmentBar.fillStyle(0xffd95f, 0.95);
     this.fragmentBar.fillRoundedRect(307, 22, 102 * Phaser.Math.Clamp(this.fragmentsCollected / this.fragmentsGoal, 0, 1), 10, 5);
     this.fragmentBarGlow.setAlpha(0.08 + 0.18 * Phaser.Math.Clamp(this.fragmentsCollected / this.fragmentsGoal, 0, 1));
 

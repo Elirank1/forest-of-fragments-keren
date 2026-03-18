@@ -9,7 +9,7 @@ export interface BackdropOptions {
 
 export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Phaser.GameObjects.Container {
   const { width, height } = scene.scale;
-  scene.add.image(width / 2, height / 2, 'paper').setDisplaySize(width, height).setAlpha(0.9);
+  scene.add.image(width / 2, height / 2, 'paper').setDisplaySize(width, height).setAlpha(0.95);
 
   const gradient = scene.add.graphics();
   gradient.fillGradientStyle(options.top, options.top, options.bottom, options.bottom, 1);
@@ -23,7 +23,7 @@ export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Ph
   for (let i = 0; i < 7; i += 1) {
     deep.add(
       scene.add
-        .ellipse(40 + i * 66, 110 + i * 26, 120, 260, 0x0d100c, 0.26)
+        .ellipse(40 + i * 66, 110 + i * 26, 120, 260, 0x2d3f29, 0.18)
         .setAngle(i % 2 === 0 ? -12 : 8)
     );
   }
@@ -31,7 +31,7 @@ export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Ph
   for (let i = 0; i < 8; i += 1) {
     mid.add(
       scene.add
-        .ellipse(10 + i * 58, 220 + (i % 3) * 42, 80, 220, 0x263121, 0.18)
+        .ellipse(10 + i * 58, 220 + (i % 3) * 42, 80, 220, 0x648058, 0.14)
         .setAngle(i % 2 === 0 ? 10 : -8)
     );
   }
@@ -39,14 +39,14 @@ export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Ph
   for (let i = 0; i < 24; i += 1) {
     front.add(
       scene.add
-        .ellipse(Phaser.Math.Between(0, width), height - Phaser.Math.Between(70, 160), Phaser.Math.Between(34, 80), Phaser.Math.Between(10, 24), 0x23361d, 0.22)
+        .ellipse(Phaser.Math.Between(0, width), height - Phaser.Math.Between(70, 160), Phaser.Math.Between(34, 80), Phaser.Math.Between(10, 24), 0x88a46f, 0.16)
         .setAngle(Phaser.Math.Between(-12, 12))
     );
   }
 
-  const haze = scene.add.rectangle(width / 2, height / 2, width, height, options.haze, 0.12);
+  const haze = scene.add.rectangle(width / 2, height / 2, width, height, options.haze, 0.1);
   const vignette = scene.add.graphics();
-  vignette.fillStyle(0x000000, 0.18);
+  vignette.fillStyle(0x3a4b34, 0.08);
   vignette.fillEllipse(width / 2, -40, width * 1.4, height * 0.44);
   vignette.fillEllipse(width / 2, height + 40, width * 1.4, height * 0.48);
   vignette.fillEllipse(-34, height / 2, width * 0.36, height * 1.3);
