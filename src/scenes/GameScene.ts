@@ -21,10 +21,12 @@ export class GameScene extends Phaser.Scene {
   private enemies!: Phaser.Physics.Arcade.Group;
   private hitboxes!: Phaser.Physics.Arcade.Group;
   private fragments!: Phaser.Physics.Arcade.Group;
+  private cocoons!: Phaser.Physics.Arcade.StaticGroup;
   private score = 0;
   private defeated = 0;
   private fragmentsCollected = 0;
   private fragmentsGoal = 28;
+  private rescuedFriends = 0;
   private roundIndex = -1;
   private roundSpawnsPending = 0;
   private roundActive = false;
@@ -53,6 +55,7 @@ export class GameScene extends Phaser.Scene {
   private lastTrailAt = 0;
   private lionSeen = false;
   private nextHealAt = 7;
+  private cocoonThresholds = [6, 14, 22];
 
   constructor() {
     super('game');
@@ -88,6 +91,7 @@ export class GameScene extends Phaser.Scene {
     this.enemies = this.physics.add.group();
     this.hitboxes = this.physics.add.group();
     this.fragments = this.physics.add.group();
+    this.cocoons = this.physics.add.staticGroup();
 
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.enemies, this.platforms);
@@ -98,9 +102,11 @@ export class GameScene extends Phaser.Scene {
       hitbox.destroy();
     });
     this.physics.add.overlap(this.player, this.fragments, (_, fragment) => this.collectFragment(fragment as Phaser.Physics.Arcade.Image), undefined, this);
+    this.physics.add.overlap(this.player, this.cocoons, (_, cocoon) => this.tryRescueFriend(cocoon as Phaser.Physics.Arcade.Image), undefined, this);
 
     this.buildHud();
     this.buildTouchControls();
+    this.spawnCocoons();
 
     this.runStartAt = this.time.now;
     this.showMessage('Collect the glowing stars.\nClear waves and heal the forest.', 2200);
@@ -187,6 +193,56 @@ export class GameScene extends Phaser.Scene {
     g.strokePath();
     g.generateTexture('fragment-star', 32, 32);
     g.destroy();
+
+    const cocoon = this.add.graphics();
+    cocoon.fillStyle(0xeaf3da, 0.95);
+    cocoon.lineStyle(2, 0x86a56e, 0.95);
+    cocoon.fillEllipse(20, 24, 28, 36);
+    cocoon.strokeEllipse(20, 24, 28, 36);
+    cocoon.lineStyle(2, 0x91b572, 0.7);
+    cocoon.strokeLineShape(new Phaser.Geom.Line(12, 12, 28, 36));
+    cocoon.strokeLineShape(new Phaser.Geom.Line(28, 12, 12, 34));
+    cocoon.generateTexture('friend-cocoon', 40, 48);
+    cocoon.destroy();
+
+    const friend = this.add.graphics();
+    friend.fillStyle(0xfff0b8, 1);
+    friend.fillCircle(18, 16, 12);
+    friend.fillStyle(0x111111, 1);
+    friend.fillCircle(13, 14, 2);
+    friend.fillCircle(21, 14, 2);
+    friend.lineStyle(3, 0x8dc06d, 0.9);
+    friend.strokeLineShape(new Phaser.Geom.Line(18, 28, 8, 40));
+    friend.strokeLineShape(new Phaser.Geom.Line(18, 28, 28, 40));
+    friend.strokeLineShape(new Phaser.Geom.Line(18, 22, 8, 18));
+    friend.strokeLineShape(new Phaser.Geom.Line(18, 22, 28, 18));
+    friend.generateTexture('forest-friend', 36, 44);
+    friend.destroy();
+  }
+
+  private spawnCocoons(): void {
+    const spots: Array<[number, number]> = [
+      [78, 412],
+      [316, 366],
+      [170, 290]
+    ];
+
+    spots.forEach(([x, y], index) => {
+      const cocoon = this.physics.add.staticImage(x, y, 'friend-cocoon');
+      cocoon.setData('index', index);
+      cocoon.setData('rescued', false);
+      this.cocoons.add(cocoon);
+      const glow = this.add.ellipse(x, y + 4, 44, 18, 0xc6e4a2, 0.14).setBlendMode(Phaser.BlendModes.ADD);
+      cocoon.setData('glow', glow);
+      this.tweens.add({
+        targets: [cocoon, glow],
+        y: y - 3,
+        duration: 1200 + index * 180,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.inOut'
+      });
+    });
   }
 
   private buildWorld(): void {
@@ -789,6 +845,41 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private tryRescueFriend(cocoon: Phaser.Physics.Arcade.Image): void {
+    if (!cocoon.active || cocoon.getData('rescued')) {
+      return;
+    }
+
+    const index = cocoon.getData('index') as number;
+    const needed = this.cocoonThresholds[index];
+    if (this.fragmentsCollected < needed) {
+      this.showMessage(`Need ${needed} stars to rescue this friend`, 500);
+      return;
+    }
+
+    cocoon.setData('rescued', true);
+    this.rescuedFriends += 1;
+    this.score += 300;
+    cocoon.disableBody(true, true);
+    (cocoon.getData('glow') as Phaser.GameObjects.Ellipse | undefined)?.destroy();
+
+    const friend = this.add.image(cocoon.x, cocoon.y - 4, 'forest-friend').setDepth(120);
+    this.spawnScorePopup(friend.x, friend.y - 34, 'Friend Saved!', '#9cd97d');
+    this.audioSystem.playSfx('score-tally', { volume: 0.05, rate: 1.28 });
+    this.tweens.add({
+      targets: friend,
+      y: friend.y - 20,
+      x: friend.x + Phaser.Math.Between(-18, 18),
+      alpha: 0,
+      duration: 900,
+      onComplete: () => friend.destroy()
+    });
+
+    if (this.rescuedFriends >= 3 && this.roundIndex >= this.level.waves.length - 1 && this.countHostiles() === 0) {
+      this.completeRun(true);
+    }
+  }
+
   private syncDecorations(time: number): void {
     const playerBody = this.player.body as Phaser.Physics.Arcade.Body | null;
     this.playerShadow
@@ -877,7 +968,7 @@ export class GameScene extends Phaser.Scene {
   private updateHud(time: number): void {
     this.roundText.setText(`Round ${Math.min(this.roundIndex + 1, this.level.waves.length)} / ${this.level.waves.length}`);
     this.healthText.setText(`Hearts ${this.player.health}/${this.player.maxHealth}   Stars ${this.fragmentsCollected}/${this.fragmentsGoal}`);
-    this.scoreText.setText(`Score ${this.score}   Defeated ${this.defeated}`);
+    this.scoreText.setText(`Friends ${this.rescuedFriends}/3   Score ${this.score}`);
     const specialReadyIn = Math.max(0, this.player.guardian.specialCooldown - (time - this.player.lastSpecialAt));
     this.cooldownText.setText(specialReadyIn <= 0 ? 'Special ready' : `Special in ${(specialReadyIn / 1000).toFixed(1)}s`);
 
