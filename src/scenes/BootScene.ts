@@ -3,7 +3,13 @@ import { destroyers } from '../data/destroyers';
 import { enemies } from '../data/enemies';
 import { guardians } from '../data/guardians';
 import { defaultSettings } from '../data/settings';
-import { createEnemyTexture, createGuardianTexture, createLionTexture, createPaperTexture } from '../assets/proceduralArt';
+import {
+  createDestroyerTexture,
+  createEnemyTexture,
+  createGuardianTexture,
+  createLionTexture,
+  createPaperTexture
+} from '../assets/proceduralArt';
 import { gameState } from '../game/GameContext';
 import { StorageSystem } from '../systems/StorageSystem';
 
@@ -25,7 +31,15 @@ export class BootScene extends Phaser.Scene {
         createLionTexture(this, 'destroyer-lion');
         return;
       }
-      createEnemyTexture(this, `destroyer-${destroyer.id}`, destroyer.color);
+      const mood =
+        destroyer.id === 'green-destroyer'
+          ? 'green'
+          : destroyer.id === 'orange-destroyer'
+            ? 'orange'
+            : destroyer.id === 'pink-destroyer'
+              ? 'pink'
+              : 'purple';
+      createDestroyerTexture(this, `destroyer-${destroyer.id}`, destroyer.color, destroyer.accent, mood);
     });
   }
 
