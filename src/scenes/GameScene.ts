@@ -22,11 +22,13 @@ export class GameScene extends Phaser.Scene {
   private hitboxes!: Phaser.Physics.Arcade.Group;
   private fragments!: Phaser.Physics.Arcade.Group;
   private cocoons!: Phaser.Physics.Arcade.StaticGroup;
+  private shrines!: Phaser.Physics.Arcade.StaticGroup;
   private score = 0;
   private defeated = 0;
   private fragmentsCollected = 0;
   private fragmentsGoal = 28;
   private rescuedFriends = 0;
+  private cleansedGroves = 0;
   private roundIndex = -1;
   private roundSpawnsPending = 0;
   private roundActive = false;
@@ -41,6 +43,7 @@ export class GameScene extends Phaser.Scene {
   private fragmentBar!: Phaser.GameObjects.Graphics;
   private fragmentBarGlow!: Phaser.GameObjects.Ellipse;
   private darkOverlay!: Phaser.GameObjects.Rectangle;
+  private restoreGlow!: Phaser.GameObjects.Rectangle;
   private deepLayer!: Phaser.GameObjects.Container;
   private midLayer!: Phaser.GameObjects.Container;
   private frontLayer!: Phaser.GameObjects.Container;
@@ -48,6 +51,8 @@ export class GameScene extends Phaser.Scene {
   private playerGlow!: Phaser.GameObjects.Ellipse;
   private enemyShadows = new Map<Enemy, Phaser.GameObjects.Ellipse>();
   private enemyGlows = new Map<Enemy, Phaser.GameObjects.Ellipse>();
+  private shrineGlows = new Map<Phaser.Physics.Arcade.Image, Phaser.GameObjects.Ellipse>();
+  private friendFollowers: Phaser.GameObjects.Image[] = [];
   private combo = 0;
   private comboUntil = 0;
   private specialActiveUntil = 0;
@@ -56,6 +61,9 @@ export class GameScene extends Phaser.Scene {
   private lionSeen = false;
   private nextHealAt = 7;
   private cocoonThresholds = [6, 14, 22];
+  private shrineRounds = [1, 4, 6];
+  private shrineRescueThresholds = [1, 2, 3];
+  private activeShrineIndex = -1;
 
   constructor() {
     super('game');
@@ -92,6 +100,7 @@ export class GameScene extends Phaser.Scene {
     this.hitboxes = this.physics.add.group();
     this.fragments = this.physics.add.group();
     this.cocoons = this.physics.add.staticGroup();
+    this.shrines = this.physics.add.staticGroup();
 
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.enemies, this.platforms);
@@ -103,10 +112,12 @@ export class GameScene extends Phaser.Scene {
     });
     this.physics.add.overlap(this.player, this.fragments, (_, fragment) => this.collectFragment(fragment as Phaser.Physics.Arcade.Image), undefined, this);
     this.physics.add.overlap(this.player, this.cocoons, (_, cocoon) => this.tryRescueFriend(cocoon as Phaser.Physics.Arcade.Image), undefined, this);
+    this.physics.add.overlap(this.player, this.shrines, (_, shrine) => this.tryCleanseShrine(shrine as Phaser.Physics.Arcade.Image), undefined, this);
 
     this.buildHud();
     this.buildTouchControls();
     this.spawnCocoons();
+    this.spawnShrines();
 
     this.runStartAt = this.time.now;
     this.showMessage('Collect the glowing stars.\nClear waves and heal the forest.', 2200);
@@ -166,6 +177,7 @@ export class GameScene extends Phaser.Scene {
       tint: 0xfff7d3
     });
 
+    this.restoreGlow = this.add.rectangle(width / 2, height / 2, width, height, 0xdff2a7, 0.02).setBlendMode(Phaser.BlendModes.ADD);
     this.darkOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x060606, 0).setScrollFactor(0).setDepth(90);
   }
 
@@ -218,6 +230,19 @@ export class GameScene extends Phaser.Scene {
     friend.strokeLineShape(new Phaser.Geom.Line(18, 22, 28, 18));
     friend.generateTexture('forest-friend', 36, 44);
     friend.destroy();
+
+    const shrine = this.add.graphics();
+    shrine.fillStyle(0xf7f2d9, 1);
+    shrine.lineStyle(3, 0x7aa360, 0.9);
+    shrine.fillRoundedRect(8, 18, 30, 18, 8);
+    shrine.strokeRoundedRect(8, 18, 30, 18, 8);
+    shrine.fillCircle(23, 14, 10);
+    shrine.strokeCircle(23, 14, 10);
+    shrine.lineStyle(2, 0xffd964, 0.9);
+    shrine.strokeLineShape(new Phaser.Geom.Line(23, 6, 23, 24));
+    shrine.strokeLineShape(new Phaser.Geom.Line(15, 14, 31, 14));
+    shrine.generateTexture('grove-shrine', 46, 42);
+    shrine.destroy();
   }
 
   private spawnCocoons(): void {
@@ -242,6 +267,25 @@ export class GameScene extends Phaser.Scene {
         repeat: -1,
         ease: 'Sine.inOut'
       });
+    });
+  }
+
+  private spawnShrines(): void {
+    const spots: Array<[number, number]> = [
+      [58, 584],
+      [312, 584],
+      [206, 284]
+    ];
+
+    spots.forEach(([x, y], index) => {
+      const shrine = this.physics.add.staticImage(x, y, 'grove-shrine');
+      shrine.setData('index', index);
+      shrine.setData('active', false);
+      shrine.setData('cleansed', false);
+      shrine.setTint(0x8e9d7b);
+      this.shrines.add(shrine);
+      const glow = this.add.ellipse(x, y + 2, 54, 24, 0xffd964, 0.08).setBlendMode(Phaser.BlendModes.ADD);
+      this.shrineGlows.set(shrine, glow);
     });
   }
 
@@ -614,7 +658,34 @@ export class GameScene extends Phaser.Scene {
     this.showMessage(`${praise}\nThe grove brightens.`, 1100);
     this.audioSystem.playSfx('score-tally', { volume: 0.06, rate: 1.06 });
     this.score += 250;
+    if (this.shrineRounds.includes(this.roundIndex) && this.cleansedGroves < 3) {
+      this.time.delayedCall(900, () => this.activateShrine(this.cleansedGroves));
+      return;
+    }
     this.time.delayedCall(1200, () => this.startNextRound());
+  }
+
+  private activateShrine(index: number): void {
+    this.activeShrineIndex = index;
+    const shrine = this.shrines.getChildren()[index] as Phaser.Physics.Arcade.Image | undefined;
+    if (!shrine || shrine.getData('cleansed')) {
+      this.startNextRound();
+      return;
+    }
+    shrine.setData('active', true);
+    shrine.clearTint();
+    const glow = this.shrineGlows.get(shrine);
+    glow?.setAlpha(0.22);
+    this.tweens.add({
+      targets: [shrine, glow].filter(Boolean),
+      scaleX: 1.06,
+      scaleY: 1.08,
+      duration: 640,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.inOut'
+    });
+    this.showMessage('Bring light back here.\nTouch the glowing grove shrine.', 1400);
   }
 
   private startAttackWindup(time: number): void {
@@ -864,20 +935,56 @@ export class GameScene extends Phaser.Scene {
     (cocoon.getData('glow') as Phaser.GameObjects.Ellipse | undefined)?.destroy();
 
     const friend = this.add.image(cocoon.x, cocoon.y - 4, 'forest-friend').setDepth(120);
+    this.friendFollowers.push(friend);
     this.spawnScorePopup(friend.x, friend.y - 34, 'Friend Saved!', '#9cd97d');
     this.audioSystem.playSfx('score-tally', { volume: 0.05, rate: 1.28 });
-    this.tweens.add({
-      targets: friend,
-      y: friend.y - 20,
-      x: friend.x + Phaser.Math.Between(-18, 18),
-      alpha: 0,
-      duration: 900,
-      onComplete: () => friend.destroy()
-    });
-
     if (this.rescuedFriends >= 3 && this.roundIndex >= this.level.waves.length - 1 && this.countHostiles() === 0) {
       this.completeRun(true);
     }
+  }
+
+  private tryCleanseShrine(shrine: Phaser.Physics.Arcade.Image): void {
+    if (!shrine.active || !shrine.getData('active') || shrine.getData('cleansed')) {
+      return;
+    }
+
+    const index = shrine.getData('index') as number;
+    const neededFriends = this.shrineRescueThresholds[index];
+    if (this.rescuedFriends < neededFriends) {
+      this.showMessage(`Rescue ${neededFriends} forest friends first`, 600);
+      return;
+    }
+
+    shrine.setData('active', false);
+    shrine.setData('cleansed', true);
+    this.activeShrineIndex = -1;
+    this.cleansedGroves += 1;
+    this.score += 400;
+    shrine.setTint(0xbce57d);
+    const glow = this.shrineGlows.get(shrine);
+    glow?.setAlpha(0.32);
+    this.restoreGlow.setAlpha(0.02 + this.cleansedGroves * 0.05);
+    this.spawnBurst(shrine.x, shrine.y - 8, 0xfaf2a8, 16, 42);
+    this.pulseAura(shrine.x, shrine.y - 8, 0xd9f18f, 90);
+    this.audioSystem.playSfx('score-tally', { volume: 0.06, rate: 1.32 });
+    this.spawnScorePopup(shrine.x, shrine.y - 36, 'Grove Restored!', '#9cd97d');
+    this.showMessage('The forest wakes up.\nA safe place has returned.', 1200);
+    this.player.health = Math.min(this.player.maxHealth, this.player.health + 2);
+    this.friendFollowers.forEach((friend, followerIndex) => {
+      this.tweens.add({
+        targets: friend,
+        y: friend.y - 18 - followerIndex * 3,
+        duration: 320,
+        yoyo: true,
+        ease: 'Sine.inOut'
+      });
+    });
+
+    if (this.roundIndex >= this.level.waves.length - 1 && this.cleansedGroves >= 3) {
+      this.time.delayedCall(1000, () => this.completeRun(true));
+      return;
+    }
+    this.time.delayedCall(1200, () => this.startNextRound());
   }
 
   private syncDecorations(time: number): void {
@@ -903,6 +1010,15 @@ export class GameScene extends Phaser.Scene {
       }
       fragment.angle += 2.2;
       return false;
+    });
+
+    this.friendFollowers.forEach((friend, index) => {
+      const targetX = this.player.x - this.player.facing * (28 + index * 16);
+      const targetY = this.player.y - 10 - (index % 2) * 12;
+      friend.x = Phaser.Math.Linear(friend.x, targetX, 0.1);
+      friend.y = Phaser.Math.Linear(friend.y, targetY, 0.1);
+      friend.scaleX = this.player.flipX ? -1 : 1;
+      friend.scaleY = 1;
     });
 
     if (this.player.guardian.id === 'aero-finch' && time < this.specialActiveUntil && time - this.lastTrailAt > 45) {
@@ -931,6 +1047,16 @@ export class GameScene extends Phaser.Scene {
       shadow.setPosition(enemy.x, enemy.y + 28).setScale(Phaser.Math.Clamp(1 - Math.abs(body?.velocity.y ?? 0) / 900, 0.7, 1.05), 1);
       glow.setPosition(enemy.x, enemy.y);
       return false;
+    });
+
+    this.shrineGlows.forEach((glow, shrine) => {
+      glow.x = shrine.x;
+      glow.y = shrine.y + 2;
+      if (shrine.getData('cleansed')) {
+        glow.setAlpha(0.18 + 0.05 * Math.sin(time / 260));
+      } else if (shrine.getData('active')) {
+        glow.setAlpha(0.18 + 0.08 * Math.sin(time / 220));
+      }
     });
   }
 
