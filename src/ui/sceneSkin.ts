@@ -15,6 +15,8 @@ export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Ph
   gradient.fillGradientStyle(options.top, options.top, options.bottom, options.bottom, 1);
   gradient.fillRect(0, 0, width, height);
   gradient.setAlpha(0.88);
+  const sun = scene.add.ellipse(width * 0.78, height * 0.16, 180, 140, 0xfff1b8, 0.22).setBlendMode(Phaser.BlendModes.ADD);
+  const veil = scene.add.rectangle(width / 2, height / 2, width, height, 0xffffff, 0.08);
 
   const deep = scene.add.container(0, 0);
   const mid = scene.add.container(0, 0);
@@ -44,6 +46,14 @@ export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Ph
     );
   }
 
+  for (let i = 0; i < 10; i += 1) {
+    front.add(
+      scene.add
+        .ellipse(Phaser.Math.Between(0, width), Phaser.Math.Between(80, height - 180), Phaser.Math.Between(18, 34), Phaser.Math.Between(8, 14), 0xf6e7b5, 0.08)
+        .setAngle(Phaser.Math.Between(-30, 30))
+    );
+  }
+
   const haze = scene.add.rectangle(width / 2, height / 2, width, height, options.haze, 0.1);
   const vignette = scene.add.graphics();
   vignette.fillStyle(0x3a4b34, 0.08);
@@ -65,6 +75,10 @@ export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Ph
     frequency: 380
   });
 
+  const border = scene.add.graphics();
+  border.lineStyle(3, 0xf6f0df, 0.45);
+  border.strokeRoundedRect(10, 10, width - 20, height - 20, 28);
+
   scene.tweens.add({
     targets: [deep],
     x: 10,
@@ -81,8 +95,18 @@ export function buildBackdrop(scene: Phaser.Scene, options: BackdropOptions): Ph
     repeat: -1,
     ease: 'Sine.inOut'
   });
+  scene.tweens.add({
+    targets: sun,
+    alpha: { from: 0.16, to: 0.26 },
+    scaleX: 1.04,
+    scaleY: 1.06,
+    duration: 2400,
+    yoyo: true,
+    repeat: -1,
+    ease: 'Sine.inOut'
+  });
 
-  return scene.add.container(0, 0, [gradient, deep, mid, front, haze, dust, vignette]);
+  return scene.add.container(0, 0, [gradient, sun, veil, deep, mid, front, haze, dust, vignette, border]);
 }
 
 export function fadeInScene(scene: Phaser.Scene): void {

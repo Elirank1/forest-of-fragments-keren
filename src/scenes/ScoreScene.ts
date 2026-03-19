@@ -12,10 +12,10 @@ export class ScoreScene extends Phaser.Scene {
     const record = gameState.latestRun;
     const { width, height } = this.scale;
     buildBackdrop(this, {
-      top: data.victory ? 0x192618 : 0x281814,
-      bottom: 0x0d0d0c,
-      haze: data.victory ? 0x8ca860 : 0xb35c3a,
-      ember: data.victory ? 0xe0d4a2 : 0xffb47b
+      top: data.victory ? 0xf4efde : 0xf6ece1,
+      bottom: data.victory ? 0x8eb07a : 0xc48a70,
+      haze: data.victory ? 0xe1ebc8 : 0xf3d3c3,
+      ember: data.victory ? 0xf2d98f : 0xffc18e
     });
     fadeInScene(this);
     const panel = createPanel(this, width / 2, height / 2, width * 0.84, height * 0.72, 0.68);
@@ -23,7 +23,7 @@ export class ScoreScene extends Phaser.Scene {
     const heading = this.add.text(width / 2, 92, data.victory ? 'The Grove Holds... For Now' : 'Game Over', {
       fontFamily: 'Georgia',
       fontSize: width < 500 ? '30px' : '36px',
-      color: '#f4ead5',
+      color: '#253423',
       align: 'center'
     }).setOrigin(0.5);
     const items: Phaser.GameObjects.GameObject[] = [panel, heading];
@@ -32,7 +32,7 @@ export class ScoreScene extends Phaser.Scene {
       items.push(this.add.text(width / 2, 126, 'The fragments scattered, but the forest remembers.', {
         fontFamily: 'Trebuchet MS',
         fontSize: '16px',
-        color: '#d9c1ae',
+        color: '#7d6558',
         align: 'center'
       }).setOrigin(0.5));
     }
@@ -49,7 +49,7 @@ export class ScoreScene extends Phaser.Scene {
       items.push(this.add.text(width / 2, height / 2 - 10, lines.join('\n'), {
         fontFamily: 'Trebuchet MS',
         fontSize: '20px',
-        color: '#f1e7d2',
+        color: '#33452d',
         align: 'center',
         lineSpacing: 12
       }).setOrigin(0.5));

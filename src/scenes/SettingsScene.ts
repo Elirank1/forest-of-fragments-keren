@@ -12,17 +12,17 @@ export class SettingsScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     buildBackdrop(this, {
-      top: 0x191814,
-      bottom: 0x0d0d0c,
-      haze: 0x7d6943,
-      ember: 0xcdb58a
+      top: 0xf5efdf,
+      bottom: 0x8fad7c,
+      haze: 0xe1ebcc,
+      ember: 0xf0d89f
     });
     fadeInScene(this);
     const panel = createPanel(this, width / 2, height / 2, width * 0.84, height * 0.6, 0.72);
     const heading = this.add.text(width / 2, 76, 'Settings', {
       fontFamily: 'Georgia',
       fontSize: width < 500 ? '30px' : '36px',
-      color: '#f4ead6'
+      color: '#243423'
     }).setOrigin(0.5);
 
     const toggles = this.renderToggles();
@@ -57,7 +57,7 @@ export class SettingsScene extends Phaser.Scene {
     items.push(this.add.text(width / 2, 350, 'Portrait-first controls\nKeyboard also supported:\nA/D move, W jump, Space attack, Shift special.', {
       fontFamily: 'Trebuchet MS',
       fontSize: '18px',
-      color: '#ece2cc',
+      color: '#4c6146',
       align: 'center',
       lineSpacing: 10
     }).setOrigin(0.5));

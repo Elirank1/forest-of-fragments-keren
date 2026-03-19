@@ -15,28 +15,33 @@ export class ProfileScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     buildBackdrop(this, {
-      top: 0x1d2a1c,
-      bottom: 0x0f110d,
-      haze: 0x7aa15d,
-      ember: 0xd7c39b
+      top: 0xf3efdf,
+      bottom: 0x83aa72,
+      haze: 0xd6eabf,
+      ember: 0xf7d694
     });
     fadeInScene(this);
     const heading = this.add.text(width / 2, 60, 'Choose a Profile', {
       fontFamily: 'Georgia',
       fontSize: width < 500 ? '30px' : '36px',
-      color: '#f1e6cf'
+      color: '#263524'
     }).setOrigin(0.5);
     const subheading = this.add.text(width / 2, 90, 'Whose fragments are you carrying today?', {
       fontFamily: 'Trebuchet MS',
       fontSize: '16px',
-      color: '#d8c4a2'
+      color: '#56704b'
+    }).setOrigin(0.5);
+    const ribbon = this.add.text(width / 2, 122, 'Lavi   Yuval   Niv', {
+      fontFamily: 'Georgia',
+      fontSize: '18px',
+      color: '#88a960'
     }).setOrigin(0.5);
 
     const panel = createPanel(this, width / 2, height * 0.54, width * 0.88, height * 0.72, 0.62);
     const cards = this.renderProfiles();
 
     const back = createButton(this, width / 2, height - 60, width * 0.55, 52, 'Back', () => transitionToScene(this, 'title'));
-    applyMenuMotion(this, [heading, subheading, panel, ...cards, back], 55);
+    applyMenuMotion(this, [heading, subheading, ribbon, panel, ...cards, back], 55);
   }
 
   private renderProfiles(): Phaser.GameObjects.GameObject[] {
