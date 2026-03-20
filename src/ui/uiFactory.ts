@@ -20,9 +20,9 @@ export function createButton(
   onClick: () => void,
   options?: ButtonOptions
 ): Phaser.GameObjects.Container {
-  const fill = options?.fill ?? 0xf5ecd8;
-  const fillAlpha = options?.fillAlpha ?? 0.94;
-  const stroke = options?.stroke ?? 0x6e8f61;
+  const fill = options?.fill ?? 0x1a1812;
+  const fillAlpha = options?.fillAlpha ?? 0.9;
+  const stroke = options?.stroke ?? 0xd1b672;
   const glowColor = options?.glow ?? stroke;
 
   const glow = scene.add
@@ -44,7 +44,7 @@ export function createButton(
       fontFamily: 'Georgia',
       fontSize: options?.fontSize ?? '22px',
       fontStyle: 'bold',
-      color: options?.textColor ?? '#22311f',
+      color: options?.textColor ?? '#f4e9cf',
       align: 'center',
       wordWrap: { width: width - 24 }
     })
@@ -57,7 +57,7 @@ export function createButton(
       .text(0, 14, options.subtitle, {
         fontFamily: 'Trebuchet MS',
         fontSize: '12px',
-        color: '#53674c',
+        color: '#cdb78c',
         align: 'center',
         wordWrap: { width: width - 28 }
       })
@@ -134,14 +134,14 @@ export function createPanel(
   height: number,
   alpha = 0.72
 ): Phaser.GameObjects.Container {
-  const shadow = scene.add.ellipse(0, 14, width * 0.92, height * 0.98, 0x31452d, 0.16);
+  const shadow = scene.add.ellipse(0, 14, width * 0.92, height * 0.98, 0x000000, 0.22);
   const glass = scene.add.graphics();
-  glass.fillStyle(0xf7f0e0, alpha);
-  glass.lineStyle(2, 0x6f9161, 0.7);
+  glass.fillStyle(0x17130f, alpha);
+  glass.lineStyle(2, 0xd0b881, 0.75);
   glass.fillRoundedRect(-width / 2, -height / 2, width, height, 28);
   glass.strokeRoundedRect(-width / 2, -height / 2, width, height, 28);
   const shine = scene.add.graphics();
-  shine.fillStyle(0xffffff, 0.16);
+  shine.fillStyle(0xffffff, 0.05);
   shine.fillRoundedRect(-width / 2 + 8, -height / 2 + 8, width - 16, height * 0.18, 22);
   return scene.add.container(x, y, [shadow, glass, shine]);
 }
