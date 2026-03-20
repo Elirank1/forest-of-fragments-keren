@@ -8,7 +8,8 @@ import {
   createEnemyTexture,
   createGuardianTexture,
   createLionTexture,
-  createPaperTexture
+  createPaperTexture,
+  createTitleCollageTexture
 } from '../assets/proceduralArt';
 import { gameState } from '../game/GameContext';
 import { StorageSystem } from '../systems/StorageSystem';
@@ -20,6 +21,7 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     createPaperTexture(this, 'paper', 512, 912);
+    createTitleCollageTexture(this, 'title-collage', 768, 1024);
     guardians.forEach((guardian) => {
       createGuardianTexture(this, `guardian-${guardian.id}`, guardian.color, guardian.accent);
     });

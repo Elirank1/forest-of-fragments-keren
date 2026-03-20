@@ -129,36 +129,43 @@ export class GameScene extends Phaser.Scene {
 
   private buildBackdrop(): void {
     const { width, height } = this.scale;
-    this.add.image(width / 2, height / 2, 'paper').setDisplaySize(width, height).setAlpha(0.94);
+    this.add.image(width / 2, height / 2, 'paper').setDisplaySize(width, height).setAlpha(0.18);
 
     const sky = this.add.graphics();
-    sky.fillGradientStyle(0xeceddc, 0xeceddc, 0x8bb178, 0x476347, 1);
+    sky.fillGradientStyle(0x2b2117, 0x2b2117, 0x101712, 0x060907, 1);
     sky.fillRect(0, 0, width, height);
     sky.setAlpha(0.98);
+
+    const greenMoon = this.add.ellipse(width * 0.28, height * 0.2, 180, 180, 0x99ec74, 0.08).setBlendMode(Phaser.BlendModes.ADD);
+    const emberMoon = this.add.ellipse(width * 0.78, height * 0.18, 170, 170, 0xff9a45, 0.08).setBlendMode(Phaser.BlendModes.ADD);
 
     this.deepLayer = this.add.container(0, 0);
     this.midLayer = this.add.container(0, 0);
     this.frontLayer = this.add.container(0, 0);
 
     for (let i = 0; i < 8; i += 1) {
-      this.deepLayer.add(this.add.ellipse(25 + i * 60, 140 + i * 28, 140, 300, 0x395039, 0.18).setAngle(i % 2 === 0 ? -14 : 10));
+      const trunk = this.add.rectangle(25 + i * 60, 500, Phaser.Math.Between(18, 28), Phaser.Math.Between(250, 360), 0x08100c, 0.4).setOrigin(0.5, 1);
+      const canopy = this.add.ellipse(25 + i * 60 + Phaser.Math.Between(-12, 12), 190 + i * 14, 170, 260, 0x0d1711, 0.32).setAngle(i % 2 === 0 ? -14 : 10);
+      this.deepLayer.add([trunk, canopy]);
     }
     for (let i = 0; i < 10; i += 1) {
-      this.midLayer.add(this.add.ellipse(-6 + i * 48, 220 + (i % 4) * 42, 86, 220, 0x6f8e5d, 0.16).setAngle(i % 2 === 0 ? 12 : -10));
+      const trunk = this.add.rectangle(-6 + i * 48, 530, Phaser.Math.Between(12, 20), Phaser.Math.Between(180, 250), 0x122017, 0.44).setOrigin(0.5, 1);
+      const canopy = this.add.ellipse(-6 + i * 48, 220 + (i % 4) * 38, 96, 220, 0x1f3324, 0.28).setAngle(i % 2 === 0 ? 12 : -10);
+      this.midLayer.add([trunk, canopy]);
     }
     for (let i = 0; i < 22; i += 1) {
       this.frontLayer.add(
         this.add
-          .ellipse(Phaser.Math.Between(0, width), height - Phaser.Math.Between(56, 150), Phaser.Math.Between(34, 92), Phaser.Math.Between(8, 22), 0xa5c084, 0.2)
+          .ellipse(Phaser.Math.Between(0, width), height - Phaser.Math.Between(56, 150), Phaser.Math.Between(34, 92), Phaser.Math.Between(8, 22), i % 4 === 0 ? 0xe0c48a : 0x3e6137, i % 4 === 0 ? 0.08 : 0.24)
           .setAngle(Phaser.Math.Between(-12, 12))
       );
     }
 
-    const fog = this.add.rectangle(width / 2, height * 0.62, width, height * 0.34, 0xf3f5e6, 0.1);
+    const fog = this.add.rectangle(width / 2, height * 0.62, width, height * 0.34, 0xe0d5bc, 0.06);
     this.tweens.add({
       targets: fog,
-      alpha: { from: 0.03, to: 0.08 },
-      duration: 2000,
+      alpha: { from: 0.02, to: 0.06 },
+      duration: 2400,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.inOut'
@@ -169,16 +176,25 @@ export class GameScene extends Phaser.Scene {
       y: { min: 0, max: height },
       lifespan: 5600,
       scale: { start: 0.03, end: 0.003 },
-      alpha: { start: 0.08, end: 0 },
+      alpha: { start: 0.06, end: 0 },
       speedX: { min: -2, max: 2 },
       speedY: { min: -5, max: 5 },
       quantity: 1,
       frequency: 260,
-      tint: 0xfff7d3
+      tint: 0xf5dca4
     });
 
-    this.restoreGlow = this.add.rectangle(width / 2, height / 2, width, height, 0xdff2a7, 0.02).setBlendMode(Phaser.BlendModes.ADD);
+    this.restoreGlow = this.add.rectangle(width / 2, height / 2, width, height, 0xb3f08a, 0.018).setBlendMode(Phaser.BlendModes.ADD);
     this.darkOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x060606, 0).setScrollFactor(0).setDepth(90);
+
+    this.tweens.add({
+      targets: [greenMoon, emberMoon],
+      alpha: { from: 0.06, to: 0.13 },
+      duration: 2200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.inOut'
+    });
   }
 
   private createArenaTextures(): void {
@@ -187,8 +203,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     const g = this.add.graphics();
-    g.fillStyle(0xfff4a6, 1);
-    g.lineStyle(2, 0xe9b857, 0.95);
+    g.fillStyle(0xfff3a2, 1);
+    g.lineStyle(3, 0x2a2118, 0.4);
     g.beginPath();
     g.moveTo(16, 2);
     g.lineTo(20, 12);
@@ -203,23 +219,29 @@ export class GameScene extends Phaser.Scene {
     g.closePath();
     g.fillPath();
     g.strokePath();
+    g.lineStyle(2, 0xf6c25e, 0.92);
+    g.strokePath();
     g.generateTexture('fragment-star', 32, 32);
     g.destroy();
 
     const cocoon = this.add.graphics();
-    cocoon.fillStyle(0xeaf3da, 0.95);
-    cocoon.lineStyle(2, 0x86a56e, 0.95);
+    cocoon.fillStyle(0xdfe9cc, 0.94);
+    cocoon.lineStyle(3, 0x2c2016, 0.32);
     cocoon.fillEllipse(20, 24, 28, 36);
     cocoon.strokeEllipse(20, 24, 28, 36);
-    cocoon.lineStyle(2, 0x91b572, 0.7);
+    cocoon.lineStyle(2, 0x91c16c, 0.65);
     cocoon.strokeLineShape(new Phaser.Geom.Line(12, 12, 28, 36));
     cocoon.strokeLineShape(new Phaser.Geom.Line(28, 12, 12, 34));
+    cocoon.fillStyle(0xa0ea6f, 0.12);
+    cocoon.fillCircle(20, 24, 20);
     cocoon.generateTexture('friend-cocoon', 40, 48);
     cocoon.destroy();
 
     const friend = this.add.graphics();
-    friend.fillStyle(0xfff0b8, 1);
+    friend.fillStyle(0xffefb8, 1);
     friend.fillCircle(18, 16, 12);
+    friend.lineStyle(2, 0x2b1d12, 0.28);
+    friend.strokeCircle(18, 16, 12);
     friend.fillStyle(0x111111, 1);
     friend.fillCircle(13, 14, 2);
     friend.fillCircle(21, 14, 2);
@@ -228,12 +250,14 @@ export class GameScene extends Phaser.Scene {
     friend.strokeLineShape(new Phaser.Geom.Line(18, 28, 28, 40));
     friend.strokeLineShape(new Phaser.Geom.Line(18, 22, 8, 18));
     friend.strokeLineShape(new Phaser.Geom.Line(18, 22, 28, 18));
+    friend.lineStyle(1, 0xfdeca6, 0.6);
+    friend.strokeCircle(18, 16, 15);
     friend.generateTexture('forest-friend', 36, 44);
     friend.destroy();
 
     const shrine = this.add.graphics();
-    shrine.fillStyle(0xf7f2d9, 1);
-    shrine.lineStyle(3, 0x7aa360, 0.9);
+    shrine.fillStyle(0xe7ddba, 1);
+    shrine.lineStyle(3, 0x2c1f16, 0.3);
     shrine.fillRoundedRect(8, 18, 30, 18, 8);
     shrine.strokeRoundedRect(8, 18, 30, 18, 8);
     shrine.fillCircle(23, 14, 10);

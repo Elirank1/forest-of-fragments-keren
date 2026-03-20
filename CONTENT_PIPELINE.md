@@ -12,12 +12,18 @@ This MVP is built so the Keren family can keep expanding the world without rewri
 ## Replace Placeholder Art With Real Children Drawings
 
 1. Export the drawing as a transparent `.png` or `.webp`.
-2. Put the file under [`/Users/mymacbook/Documents/New project/public`](/Users/mymacbook/Documents/New project/public) or add a proper asset folder strategy under [`/Users/mymacbook/Documents/New project/src/assets`](/Users/mymacbook/Documents/New project/src/assets).
-3. In [`/Users/mymacbook/Documents/New project/src/scenes/BootScene.ts`](/Users/mymacbook/Documents/New project/src/scenes/BootScene.ts), replace the procedural texture creation for that character with `this.load.image(...)` in `preload`.
-4. Keep the same texture key currently used by scenes and entities. Example:
+2. Put the file under [`/Users/mymacbook/Documents/New project/public/art`](/Users/mymacbook/Documents/New project/public/art).
+3. Keep the same texture key currently used by scenes and entities. Example:
    - `guardian-tamar-root`
    - `destroyer-pink-destroyer`
-5. Avoid over-cleaning the art. Preserve rough outlines, uneven edges, strange proportions, and scan texture.
+4. Recommended filenames for direct replacement:
+   - `public/art/green-destroyer.png`
+   - `public/art/orange-destroyer.png`
+   - `public/art/pink-destroyer.png`
+   - `public/art/lion.png`
+   - `public/art/title-collage.png`
+5. In [`/Users/mymacbook/Documents/New project/src/scenes/BootScene.ts`](/Users/mymacbook/Documents/New project/src/scenes/BootScene.ts), swap the procedural creator for `this.load.image(...)` using the existing key names.
+6. Avoid over-cleaning the art. Preserve rough outlines, uneven edges, strange proportions, paper grain, and scan texture.
 
 ## Replace the Pink Placeholder Destroyer
 
